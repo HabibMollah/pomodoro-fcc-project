@@ -62,3 +62,13 @@ input {
   font-size: 4rem;
   font-weight: 900;
 }
+
+/* .start-stop-reset button {
+  display: block;
+} */
+
+.start-stop-reset {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}

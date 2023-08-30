@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import msToMMSSConverter from './msToMMSSConverter';
 
 export default function App() {
-  const [time, setTime] = useState(60 * 60 * 1000);
+  const [time, setTime] = useState(25 * 60 * 1000);
+  const [isStarted, setIsStarted] = useState(false);
+
+  useEffect(() => {
+    if (isStarted) {
+      setTimeout(() => {
+        setTime(time - 1000);
+      }, 1000);
+    }
+  });
 
   return (
     <main>
@@ -20,20 +29,37 @@ export default function App() {
           Session Length
         </label>
         <div className="flex">
-          <button id="session-decrement">-</button>
-          <input disabled type="number" id="session-length" defaultValue={25} />
-          <button id="session-increment">+</button>
+          <button
+            onClick={() => setTime(time - 60 * 1000)}
+            id="session-decrement">
+            -
+          </button>
+          <input
+            disabled
+            type="number"
+            id="session-length"
+            value={time / 1000 / 60}
+          />
+          <button
+            onClick={() => setTime(time + 60 * 1000)}
+            id="session-increment">
+            +
+          </button>
         </div>
       </section>
 
       <section className="clock">
         <h2 id="timer-label">Session</h2>
-        <div id="time-left">25:00</div>
+        <div id="time-left">{msToMMSSConverter(time)}</div>
       </section>
 
       <section className="start-stop-reset">
-        <button id="start_stop">start | stop</button>
-        <button id="reset">reset</button>
+        <button onClick={() => setIsStarted(!isStarted)} id="start_stop">
+          start | stop
+        </button>
+        <button onClick={() => setTime(25 * 60 * 1000)} id="reset">
+          reset
+        </button>
       </section>
     </main>
   );
