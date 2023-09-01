@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import msToMMSSConverter from './msToMMSSConverter';
 
@@ -7,6 +7,7 @@ export default function App() {
   const [breakLength, setBreakLength] = useState(5 * 60 * 1000);
   const [time, setTime] = useState(sessionLength);
   const [isStarted, setIsStarted] = useState(false);
+  const beepRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (!isStarted)
@@ -29,14 +30,38 @@ export default function App() {
 
   return (
     <main>
+      <audio
+        ref={beepRef}
+        id="beep"
+        src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav"></audio>
       <section className="controls">
         <label id="break-label" htmlFor="break-length">
           Break Length
         </label>
         <div className="flex">
-          <button id="break-decrement">-</button>
-          <input disabled type="number" id="break-length" defaultValue={5} />
-          <button id="break-increment">+</button>
+          <button
+            onClick={() => {
+              if (!isStarted) {
+                if (breakLength > 60 * 1000 && !isStarted)
+                  setBreakLength(breakLength - 60 * 1000);
+              }
+            }}
+            id="break-decrement">
+            -
+          </button>
+          <input
+            disabled
+            type="number"
+            id="break-length"
+            value={Math.floor(breakLength / 1000 / 60)}
+          />
+          <button
+            onClick={() => {
+              if (!isStarted) setBreakLength(breakLength + 60 * 1000);
+            }}
+            id="break-increment">
+            +
+          </button>
         </div>
         <label id="session-label" htmlFor="session-length">
           Session Length
@@ -82,6 +107,7 @@ export default function App() {
             setIsStarted(false);
             setSessionLength(25 * 60 * 1000);
             setTime(25 * 60 * 1000);
+            setBreakLength(5 * 60 * 1000);
           }}
           id="reset">
           reset
