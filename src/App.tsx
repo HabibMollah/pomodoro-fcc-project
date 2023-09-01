@@ -6,7 +6,9 @@ export default function App() {
   const [sessionLength, setSessionLength] = useState(25 * 60 * 1000);
   const [breakLength, setBreakLength] = useState(5 * 60 * 1000);
   const [time, setTime] = useState(sessionLength);
+  const [breakTime, setBreakTime] = useState(breakLength);
   const [isStarted, setIsStarted] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
   const beepRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -23,6 +25,31 @@ export default function App() {
 
     return () => timer && clearInterval(timer);
   });
+
+  useEffect(() => {
+    if (!isBreak)
+      return () => {
+        return;
+      };
+
+    const breakTimer =
+      breakTime > 0 &&
+      setInterval(() => {
+        setBreakTime(breakTime - 1000);
+      }, 1000);
+
+    return () => breakTimer && clearInterval(breakTimer);
+  });
+
+  useEffect(() => {
+    if (time === 0) {
+      if (beepRef.current) {
+        beepRef.current.play();
+      }
+      setIsStarted(false);
+      setIsBreak(true);
+    }
+  }, [time]);
 
   useEffect(() => {
     setTime(sessionLength);
@@ -95,7 +122,9 @@ export default function App() {
 
       <section className="clock">
         <h2 id="timer-label">Session</h2>
-        <div id="time-left">{msToMMSSConverter(time)}</div>
+        <div id="time-left">
+          {time === 0 ? msToMMSSConverter(breakTime) : msToMMSSConverter(time)}
+        </div>
       </section>
 
       <section className="start-stop-reset">
@@ -108,6 +137,7 @@ export default function App() {
             setSessionLength(25 * 60 * 1000);
             setTime(25 * 60 * 1000);
             setBreakLength(5 * 60 * 1000);
+            setBreakTime(5 * 60 * 1000);
           }}
           id="reset">
           reset
