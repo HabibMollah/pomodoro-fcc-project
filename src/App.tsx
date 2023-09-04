@@ -77,9 +77,9 @@ export default function App() {
   return (
     <main>
       <h1>Pomodoro Clock</h1>
-      <p>
+      <h2>
         by <a href="https://github.com/habibmollah">Habib Mollah</a>
-      </p>
+      </h2>
       <section className="controls">
         <label id="session-label" htmlFor="session-length">
           Session Length
