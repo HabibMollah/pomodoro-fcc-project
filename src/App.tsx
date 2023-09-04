@@ -1,148 +1,139 @@
 import { useEffect, useRef, useState } from 'react';
 import './App.css';
-import msToMMSSConverter from './msToMMSSConverter';
 
 export default function App() {
-  const [sessionLength, setSessionLength] = useState(25 * 60 * 1000);
-  const [breakLength, setBreakLength] = useState(5 * 60 * 1000);
-  const [time, setTime] = useState(sessionLength);
-  const [breakTime, setBreakTime] = useState(breakLength);
-  const [isStarted, setIsStarted] = useState(false);
-  const [isBreak, setIsBreak] = useState(false);
-  const beepRef = useRef<HTMLAudioElement>(null);
+  const [displayTime, setDisplayTime] = useState(1500);
+  const [breakTime, setBreakTime] = useState(5);
+  const [sessionTime, setSessionTime] = useState(25);
+  const [timerOn, setTimerOn] = useState(false);
+  const [timerId, setTimerId] = useState('Session');
+  const audioElement = useRef<HTMLAudioElement>(null);
+  const loop: undefined = undefined;
 
-  useEffect(() => {
-    if (!isStarted)
-      return () => {
-        return;
-      };
+  const formatTime = (time: number) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let minutes: any = Math.floor(time / 60);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let seconds: any = time % 60;
 
-    const timer =
-      time > 0 &&
-      setInterval(() => {
-        setTime(time - 1000);
-      }, 1000);
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
 
-    return () => timer && clearInterval(timer);
-  });
+    return `${minutes}:${seconds}`;
+  };
 
-  useEffect(() => {
-    if (!isBreak)
-      return () => {
-        return;
-      };
-
-    const breakTimer =
-      breakTime > 0 &&
-      setInterval(() => {
-        setBreakTime(breakTime - 1000);
-      }, 1000);
-
-    return () => breakTimer && clearInterval(breakTimer);
-  });
-
-  useEffect(() => {
-    if (time === 0) {
-      if (beepRef.current) {
-        beepRef.current.play();
-      }
-      setIsStarted(false);
-      setIsBreak(true);
+  const changeTime = (amount: number, type: string) => {
+    let newCount;
+    if (type === 'Session') {
+      newCount = sessionTime + amount;
+    } else {
+      newCount = breakTime + amount;
     }
-  }, [time]);
+
+    if (newCount > 0 && newCount <= 60 && !timerOn) {
+      type === 'Session' ? setSessionTime(newCount) : setBreakTime(newCount);
+      if (type === 'Session') {
+        setDisplayTime(newCount * 60);
+      }
+    }
+  };
+
+  const setActive = () => {
+    setTimerOn(!timerOn);
+  };
 
   useEffect(() => {
-    setTime(sessionLength);
-  }, [sessionLength]);
+    if (timerOn && displayTime > 0) {
+      const interval = setInterval(() => {
+        setDisplayTime(displayTime - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else if (displayTime === 0 && audioElement.current) {
+      audioElement.current.play();
+      audioElement.current.currentTime = 0;
+
+      //    setTimeout(() => {
+      if (timerId === 'Session') {
+        setDisplayTime(breakTime * 60);
+        setTimerId('Break');
+      }
+      if (timerId === 'Break') {
+        setDisplayTime(sessionTime * 60);
+        setTimerId('Session');
+      }
+    }
+  }, [breakTime, sessionTime, displayTime, timerId, timerOn]);
+
+  const resetTime = () => {
+    setBreakTime(5);
+    setSessionTime(25);
+    setDisplayTime(1500);
+    setTimerId('Session');
+    setTimerOn(false);
+    clearInterval(loop);
+    if (audioElement.current) audioElement.current.load();
+  };
 
   return (
     <main>
-      <audio
-        ref={beepRef}
-        id="beep"
-        src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav"></audio>
+      <h1>Pomodoro Clock</h1>
+      <p>
+        by <a href="https://github.com/habibmollah">Habib Mollah</a>
+      </p>
       <section className="controls">
-        <label id="break-label" htmlFor="break-length">
-          Break Length
-        </label>
-        <div className="flex">
-          <button
-            onClick={() => {
-              if (!isStarted) {
-                if (breakLength > 60 * 1000 && !isStarted)
-                  setBreakLength(breakLength - 60 * 1000);
-              }
-            }}
-            id="break-decrement">
-            -
-          </button>
-          <input
-            disabled
-            type="number"
-            id="break-length"
-            value={Math.floor(breakLength / 1000 / 60)}
-          />
-          <button
-            onClick={() => {
-              if (!isStarted) setBreakLength(breakLength + 60 * 1000);
-            }}
-            id="break-increment">
-            +
-          </button>
-        </div>
         <label id="session-label" htmlFor="session-length">
           Session Length
         </label>
         <div className="flex">
           <button
-            onClick={() => {
-              if (!isStarted) {
-                if (sessionLength > 60 * 1000 && !isStarted)
-                  setSessionLength(sessionLength - 60 * 1000);
-              }
-            }}
+            onClick={() => changeTime(-1, 'Session')}
             id="session-decrement">
             -
           </button>
           <input
+            value={sessionTime}
             disabled
             type="number"
             id="session-length"
-            value={Math.floor(sessionLength / 1000 / 60)}
           />
           <button
-            onClick={() => {
-              if (!isStarted) setSessionLength(sessionLength + 60 * 1000);
-            }}
+            onClick={() => changeTime(1, 'Session')}
             id="session-increment">
+            +
+          </button>
+        </div>
+        <label id="break-label" htmlFor="break-length">
+          Break Length
+        </label>
+        <div className="flex">
+          <button onClick={() => changeTime(-1, 'Break')} id="break-decrement">
+            -
+          </button>
+          <input value={breakTime} disabled type="number" id="break-length" />
+          <button onClick={() => changeTime(1, 'Break')} id="break-increment">
             +
           </button>
         </div>
       </section>
 
       <section className="clock">
-        <h2 id="timer-label">Session</h2>
-        <div id="time-left">
-          {time === 0 ? msToMMSSConverter(breakTime) : msToMMSSConverter(time)}
-        </div>
+        <h2 id="timer-label">{timerId}</h2>
+        <div id="time-left">{formatTime(displayTime)}</div>
       </section>
 
       <section className="start-stop-reset">
-        <button onClick={() => setIsStarted(!isStarted)} id="start_stop">
-          start | stop
+        <button onClick={setActive} id="start_stop">
+          {timerOn ? 'pause' : 'start'}
         </button>
-        <button
-          onClick={() => {
-            setIsStarted(false);
-            setSessionLength(25 * 60 * 1000);
-            setTime(25 * 60 * 1000);
-            setBreakLength(5 * 60 * 1000);
-            setBreakTime(5 * 60 * 1000);
-          }}
-          id="reset">
+        <button onClick={resetTime} id="reset">
           reset
         </button>
       </section>
+      <audio
+        id="beep"
+        src="https://raw.githubusercontent.com/freeCodeCamp/cdn/master/build/testable-projects-fcc/audio/BeepSound.wav"
+        ref={audioElement}
+      />
     </main>
   );
 }
